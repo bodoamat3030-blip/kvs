@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVS Studio — Product Design & Creative Development</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #050505;
+    --bg2: #0c0c0c;
+    --bg3: #111;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0ede6;
+    --muted: rgba(240,237,230,0.45);
+    --dim: rgba(240,237,230,0.2);
+    --accent: #c8f060;
+    --accent2: #ff6b35;
+    --white: #f0ede6;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, width 0.25s, height 0.25s, background 0.25s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(200,240,96,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
+  }
+  .cursor.hover { width: 18px; height: 18px; }
+  .cursor-ring.hover { width: 60px; height: 60px; opacity: 0.4; }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.4;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.5rem 2.5rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.4s, background 0.4s, backdrop-filter 0.4s;
+  }
+  nav.scrolled {
+    border-color: var(--border);
+    background: rgba(5,5,5,0.8);
+    backdrop-filter: blur(16px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: inline-block; }
+  .nav-links { display: flex; align-items: center; gap: 2.5rem; }
+  .nav-links a {
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: none;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 0.55rem 1.3rem;
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    color: var(--white) !important;
+    transition: background 0.25s, border-color 0.25s !important;
+  }
+  .nav-cta:hover { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.25) !important; }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0 2.5rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 80%, rgba(200,240,96,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(255,107,53,0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-label::before { content: ''; width: 28px; height: 1px; background: var(--muted); }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 10vw, 9rem);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    margin-bottom: 0;
+  }
+  .hero-title em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .hero-title .accent-word { color: var(--accent); }
+
+  .hero-bottom {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .hero-desc {
+    max-width: 340px;
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .hero-scroll {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    animation: scrollPulse 2.5s ease-in-out infinite;
+  }
+  .scroll-icon {
+    width: 22px; height: 36px;
+    border: 1px solid var(--dim);
+    border-radius: 100px;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 6px;
+  }
+  .scroll-dot {
+    width: 3px; height: 7px;
+    background: var(--accent);
+    border-radius: 100px;
+    animation: scrollDot 2s ease-in-out infinite;
+  }
+  @keyframes scrollDot { 0%,100%{transform:translateY(0);opacity:1} 60%{transform:translateY(10px);opacity:0} }
+  @keyframes scrollPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+  .hero-cta-group { display: flex; align-items: center; gap: 1.5rem; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent);
+    color: #050505;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    padding: 0.85rem 1.8rem;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: none;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,240,96,0.25); }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: none;
+  }
+  .btn-ghost:hover { color: var(--white); }
+  .arrow-icon { font-size: 1.1rem; transition: transform 0.2s; }
+  .btn-ghost:hover .arrow-icon, .btn-primary:hover .arrow-icon { transform: translate(3px,-3px); }
+
+  /* Counter strip */
+  .stats-strip {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+  }
+  .stat-item {
+    padding: 2.5rem 2.5rem;
+    border-right: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-item.visible { opacity: 1; transform: translateY(0); }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* Services */
+  section { position: relative; }
+  .section-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 5rem 2.5rem 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-tag {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-tag::before { content: ''; width: 18px; height: 1px; background: var(--accent); }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 4rem);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--white);
+    max-width: 600px;
+  }
+  .section-desc {
+    max-width: 320px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.75;
+    margin-top: auto;
+    padding-top: 2rem;
+    align-self: flex-end;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .service-card {
+    padding: 2.5rem;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s, transform 0.5s, background 0.3s;
+    cursor: none;
+  }
+  .service-card:last-child, .service-card:nth-child(3n) { border-right: none; }
+  .service-card:hover { background: var(--bg3); }
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .service-card:hover::after { transform: scaleX(1); }
+  .service-card.visible { opacity: 1; transform: translateY(0); }
+  .service-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--dim);
+    margin-bottom: 1.5rem;
+  }
+  .service-icon {
+    width: 48px; height: 48px;
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .service-card:hover .service-icon { border-color: var(--accent); background: rgba(200,240,96,0.06); }
+  .service-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+  }
+  .service-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.7; }
+  .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1.5rem; }
+  .tag {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--dim);
+    letter-spacing: 0.04em;
+  }
+
+  /* Work / Projects */
+  .work-section { padding: 0; }
+  .work-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    min-height: 420px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s, transform 0.6s;
+    cursor: none;
+  }
+  .work-item.visible { opacity: 1; transform: translateY(0); }
+  .work-item:nth-child(even) .work-visual { order: -1; }
+  .work-visual {
+    background: var(--bg3);
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    min-height: 360px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .work-item:nth-child(even) .work-visual { border-right: none; border-left: 1px solid var(--border); }
+  .work-visual-inner {
+    width: 80%; height: 70%;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.5s ease;
+  }
+  .work-item:hover .work-visual-inner { transform: scale(1.03); }
+  .work-v1 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+  .work-v2 { background: linear-gradient(135deg, #0d1b2a 0%, #1b4332 50%, #2d6a4f 100%); }
+  .work-v3 { background: linear-gradient(135deg, #1a0a00 0%, #3d1500 50%, #6b2e00 100%); }
+  .work-v4 { background: linear-gradient(135deg, #0a0a14 0%, #1a0a2e 50%, #2d1b4e 100%); }
+  .work-mockup {
+    position: absolute;
+    inset: 10%;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+    overflow: hidden;
+  }
+  .work-mockup-bar {
+    height: 28px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; padding: 0 12px; gap: 6px;
+  }
+  .wm-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .work-mockup-content { padding: 16px; }
+  .wm-line { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 8px; }
+
+  .work-info { padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
+  .work-cat {
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  .work-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    letter-spacing: -0.03em;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .work-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.75; max-width: 360px; }
+  .work-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 2rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    cursor: none;
+    transition: gap 0.2s;
+  }
+  .work-link:hover { gap: 14px; }
+  .work-link::after { content: '→'; }
+  .work-year { margin-top: auto; font-size: 0.78rem; color: var(--dim); padding-top: 2rem; border-top: 1px solid var(--border); }
+
+  /* Process */
+  .process-section { padding: 5rem 2.5rem; }
+  .process-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 3rem; }
+  .process-step {
+    padding: 2rem;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    position: relative;
+    opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s;
+  }
+  .process-step.visible { opacity: 1; transform: translateY(0); }
+  .process-step:hover { background: var(--bg3); }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    position: absolute;
+    top: 1rem; right: 1.5rem;
+  }
+  .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--white); margin-bottom: 0.75rem; }
+  .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+  .step-icon { font-size: 1.5rem; margin-bottom: 1.25rem; }
+
+  /* Testimonials */
+  .testimonials-section { padding: 5rem 2.5rem; border-top: 1px solid var(--border); }
+  .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .testimonial-card {
+    padding: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg2);
+    opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s;
+    transition-delay: calc(var(--i) * 0.1s);
+  }
+  .testimonial-card.visible { opacity: 1; transform: translateY(0); }
+  .quote-mark { font-size: 2.5rem; color: var(--accent); line-height: 1; margin-bottom: 1rem; font-family: Georgia, serif; }
+  .quote-text { font-size: 0.9rem; color: var(--muted); line-height: 1.75; font-style: italic; }
+  .quote-author { margin-top: 1.5rem; display: flex; align-items: center; gap: 10px; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .author-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 600; font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+  .author-name { font-size: 0.82rem; font-weight: 500; color: var(--white); }
+  .author-role { font-size: 0.75rem; color: var(--dim); }
+
+  /* Marquee */
+  .marquee-section {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 0;
+    overflow: hidden;
+  }
+  .marquee-track {
+    display: flex; gap: 3rem;
+    animation: marquee 25s linear infinite;
+    white-space: nowrap;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .marquee-item {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    display: flex; align-items: center; gap: 1.5rem;
+    flex-shrink: 0;
+  }
+  .marquee-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+
+  /* CTA Section */
+  .cta-section {
+    padding: 6rem 2.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(200,240,96,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 6vw, 6rem);
+    letter-spacing: -0.04em;
+    color: var(--white);
+    line-height: 0.95;
+    margin-bottom: 2rem;
+  }
+  .cta-section h2 em { font-style: italic; color: var(--muted); font-weight: 600; }
+  .cta-section p { color: var(--muted); font-size: 1rem; max-width: 400px; margin: 0 auto 2.5rem; }
+  .cta-email {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+    padding: 1rem 2rem;
+    border: 1px solid rgba(200,240,96,0.2);
+    border-radius: 100px;
+    transition: background 0.3s, box-shadow 0.3s;
+    cursor: none;
+  }
+  .cta-email:hover { background: rgba(200,240,96,0.06); box-shadow: 0 0 48px rgba(200,240,96,0.1); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--white); font-size: 1.1rem; }
+  .footer-copy { font-size: 0.78rem; color: var(--dim); }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a { font-size: 0.78rem; color: var(--dim); text-decoration: none; transition: color 0.2s; cursor: none; }
+  .footer-links a:hover { color: var(--muted); }
+
+  /* Animations */
+  .fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.7s, transform 0.7s; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    nav { padding: 1.2rem 1.25rem; }
+    .nav-links { display: none; }
+    .hero { padding: 0 1.25rem 3rem; }
+    .hero-bottom { flex-direction: column; gap: 2rem; align-items: flex-start; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .stat-item { padding: 1.75rem 1.25rem; }
+    .services-grid { grid-template-columns: 1fr; }
+    .service-card { border-right: none; }
+    .section-header { flex-direction: column; padding: 3rem 1.25rem 2rem; }
+    .work-item { grid-template-columns: 1fr; }
+    .work-item .work-visual { order: 0 !important; border-right: none !important; border-left: none !important; border-bottom: 1px solid var(--border); min-height: 260px; }
+    .work-info { padding: 2rem 1.25rem; }
+    .process-steps { grid-template-columns: 1fr 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+    .process-section, .testimonials-section { padding: 3rem 1.25rem; }
+    .cta-section { padding: 4rem 1.25rem; }
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#" class="logo"><span class="logo-dot"></span>KVS Studio</a>
+  <div class="nav-links">
+    <a href="#work">Work</a>
+    <a href="#services">Services</a>
+    <a href="#process">Process</a>
+    <a href="#contact" class="nav-cta">Let's Talk</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-lines"></div>
+  <div class="hero-label">Creative Studio — Est. 2018</div>
+  <h1 class="hero-title">
+    We design<br>
+    <em>digital</em><br>
+    <span class="accent-word">products</span>
+  </h1>
+  <div class="hero-bottom">
+    <p class="hero-desc">
+      KVS is a creative studio building digital products for startups and enterprises. We combine product design, frontend engineering, and 3D/WebGL to craft memorable experiences.
+    </p>
+    <div class="hero-cta-group">
+      <a href="#work" class="btn-primary">View Work <span class="arrow-icon">↗</span></a>
+      <a href="#contact" class="btn-ghost">Get in touch <span class="arrow-icon">→</span></a>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-icon"><div class="scroll-dot"></div></div>
+      Scroll
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats-strip">
+  <div class="stat-item" style="transition-delay:0s">
+    <div class="stat-num"><span id="c1">0</span>+</div>
+    <div class="stat-label">Projects delivered</div>
+  </div>
+  <div class="stat-item" style="transition-delay:0.1s">
+    <div class="stat-num"><span id="c2">0</span>+</div>
+    <div class="stat-label">Happy clients</div>
+  </div>
+  <div class="stat-item" style="transition-delay:0.2s">
+    <div class="stat-num"><span id="c3">0</span></div>
+    <div class="stat-label">Awards won</div>
+  </div>
+  <div class="stat-item" style="transition-delay:0.3s">
+    <div class="stat-num"><span id="c4">0</span></div>
+    <div class="stat-label">Years of craft</div>
+  </div>
+</div>
+
+<!-- Marquee -->
+<div class="marquee-section">
+  <div class="marquee-track" id="marquee">
+    <span class="marquee-item"><span class="marquee-dot"></span>Product Design</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Frontend Engineering</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>3D & WebGL</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Brand Identity</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Motion Design</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>UX Research</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Design Systems</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Creative Development</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Product Design</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Frontend Engineering</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>3D & WebGL</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Brand Identity</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Motion Design</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>UX Research</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Design Systems</span>
+    <span class="marquee-item"><span class="marquee-dot"></span>Creative Development</span>
+  </div>
+</div>
+
+<!-- Services -->
+<section id="services">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">What we do</div>
+      <h2 class="section-title">Full-spectrum digital craftsmanship</h2>
+    </div>
+    <p class="section-desc">From early concept to polished product — we cover every layer of the digital stack with precision and intent.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-num">01</div>
+      <div class="service-icon">✦</div>
+      <div class="service-name">Product Design</div>
+      <p class="service-desc">End-to-end UX/UI design for web and mobile products. We make complex interfaces feel effortless and intuitive.</p>
+      <div class="service-tags">
+        <span class="tag">UX Research</span><span class="tag">UI Design</span><span class="tag">Prototyping</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <div class="service-icon">⬡</div>
+      <div class="service-name">Frontend Engineering</div>
+      <p class="service-desc">High-performance, accessible frontend code. We build pixel-perfect implementations using React, Vue, and TypeScript.</p>
+      <div class="service-tags">
+        <span class="tag">React</span><span class="tag">Vue.js</span><span class="tag">TypeScript</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <div class="service-icon">◈</div>
+      <div class="service-name">3D & WebGL</div>
+      <p class="service-desc">Immersive 3D experiences and interactive visualizations that push the boundaries of the modern browser.</p>
+      <div class="service-tags">
+        <span class="tag">Three.js</span><span class="tag">GLSL</span><span class="tag">WebGL</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">04</div>
+      <div class="service-icon">◎</div>
+      <div class="service-name">Brand & Identity</div>
+      <p class="service-desc">Strategic brand systems that connect with your audience — from logo to comprehensive visual language.</p>
+      <div class="service-tags">
+        <span class="tag">Logo Design</span><span class="tag">Typography</span><span class="tag">Style Guides</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">05</div>
+      <div class="service-icon">▲</div>
+      <div class="service-name">Design Systems</div>
+      <p class="service-desc">Scalable component libraries and design systems that accelerate your team's velocity and maintain consistency.</p>
+      <div class="service-tags">
+        <span class="tag">Figma</span><span class="tag">Storybook</span><span class="tag">Tokens</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">06</div>
+      <div class="service-icon">❋</div>
+      <div class="service-name">Motion Design</div>
+      <p class="service-desc">Purposeful animation and motion that brings interfaces to life, guiding users and communicating brand personality.</p>
+      <div class="service-tags">
+        <span class="tag">Lottie</span><span class="tag">GSAP</span><span class="tag">CSS Motion</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Work -->
+<section id="work">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">Selected work</div>
+      <h2 class="section-title">Projects we're proud of</h2>
+    </div>
+    <p class="section-desc">A curated selection of recent projects spanning fintech, SaaS, e-commerce, and creative industries.</p>
+  </div>
+
+  <div class="work-item">
+    <div class="work-visual">
+      <div class="work-visual-inner work-v1">
+        <div class="work-mockup">
+          <div class="work-mockup-bar">
+            <div class="wm-dot" style="background:#ff5f57"></div>
+            <div class="wm-dot" style="background:#ffbd2e"></div>
+            <div class="wm-dot" style="background:#28c840"></div>
+          </div>
+          <div class="work-mockup-content">
+            <div class="wm-line" style="width:60%"></div>
+            <div class="wm-line" style="width:90%"></div>
+            <div class="wm-line" style="width:45%"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+              <div style="height:60px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.06)"></div>
+              <div style="height:60px;background:rgba(200,240,96,0.06);border-radius:8px;border:1px solid rgba(200,240,96,0.1)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="work-info">
+      <div class="work-cat">Fintech · Product Design</div>
+      <h3 class="work-title">Nexus Pay</h3>
+      <p class="work-desc">A next-generation payment platform redesigned from the ground up. Improved conversion by 38% through data-driven UX improvements and a streamlined checkout flow.</p>
+      <a href="#" class="work-link">View Case Study </a>
+      <div class="work-year">2024</div>
+    </div>
+  </div>
+
+  <div class="work-item">
+    <div class="work-visual">
+      <div class="work-visual-inner work-v2">
+        <div class="work-mockup">
+          <div class="work-mockup-bar">
+            <div class="wm-dot" style="background:#ff5f57"></div>
+            <div class="wm-dot" style="background:#ffbd2e"></div>
+            <div class="wm-dot" style="background:#28c840"></div>
+          </div>
+          <div class="work-mockup-content">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <div style="flex:1;height:80px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.06)"></div>
+              <div style="flex:2;height:80px;background:rgba(45,106,79,0.15);border-radius:8px;border:1px solid rgba(45,106,79,0.25)"></div>
+            </div>
+            <div class="wm-line" style="width:80%"></div>
+            <div class="wm-line" style="width:55%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="work-info">
+      <div class="work-cat">SaaS · Design System</div>
+      <h3 class="work-title">Verdant OS</h3>
+      <p class="work-desc">A comprehensive design system for an enterprise SaaS platform serving 200+ teams. Built a Figma library with 300+ components and a living Storybook documentation.</p>
+      <a href="#" class="work-link">View Case Study </a>
+      <div class="work-year">2024</div>
+    </div>
+  </div>
+
+  <div class="work-item">
+    <div class="work-visual">
+      <div class="work-visual-inner work-v3">
+        <div class="work-mockup">
+          <div class="work-mockup-bar">
+            <div class="wm-dot" style="background:#ff5f57"></div>
+            <div class="wm-dot" style="background:#ffbd2e"></div>
+            <div class="wm-dot" style="background:#28c840"></div>
+          </div>
+          <div class="work-mockup-content">
+            <div style="height:90px;background:rgba(107,46,0,0.2);border-radius:10px;border:1px solid rgba(255,107,53,0.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+              <div style="width:40px;height:40px;background:rgba(255,107,53,0.2);border-radius:50%;border:1px solid rgba(255,107,53,0.3)"></div>
+            </div>
+            <div class="wm-line" style="width:70%"></div>
+            <div class="wm-line" style="width:40%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="work-info">
+      <div class="work-cat">3D / WebGL · Brand</div>
+      <h3 class="work-title">Ember Labs</h3>
+      <p class="work-desc">An award-winning brand website featuring real-time 3D product visualization and custom shader animations, driving a 5× increase in demo sign-ups.</p>
+      <a href="#" class="work-link">View Case Study </a>
+      <div class="work-year">2023</div>
+    </div>
+  </div>
+</section>
+
+<!-- Process -->
+<section id="process" class="process-section">
+  <div class="section-tag">How we work</div>
+  <h2 class="section-title" style="margin-bottom:0">A process built for clarity</h2>
+  <div class="process-steps">
+    <div class="process-step" style="transition-delay:0s">
+      <div class="step-num">01</div>
+      <div class="step-icon">🔍</div>
+      <div class="step-title">Discover</div>
+      <p class="step-desc">Deep-dive into your users, business goals, and constraints to define the right problem before designing the solution.</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.1s">
+      <div class="step-num">02</div>
+      <div class="step-icon">✏️</div>
+      <div class="step-title">Define</div>
+      <p class="step-desc">Synthesize research into clear principles, user flows, and a product brief that aligns stakeholders before a pixel is drawn.</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.2s">
+      <div class="step-num">03</div>
+      <div class="step-icon">⚡</div>
+      <div class="step-title">Design</div>
+      <p class="step-desc">Rapid, high-fidelity design iterations with continuous feedback loops. From wireframes to production-ready Figma specs.</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.3s">
+      <div class="step-num">04</div>
+      <div class="step-icon">🚀</div>
+      <div class="step-title">Deliver</div>
+      <p class="step-desc">Pixel-perfect implementation with meticulous QA. We ship polished products and stay on to iterate post-launch.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials-section">
+  <div class="section-tag">Client words</div>
+  <h2 class="section-title" style="margin-bottom:0">What they say</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card" style="--i:0">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">KVS completely transformed our product's visual language. The design system they built has saved our team hundreds of hours and delighted every user.</p>
+      <div class="quote-author">
+        <div class="author-avatar" style="background:rgba(200,240,96,0.1);color:var(--accent)">AR</div>
+        <div>
+          <div class="author-name">Alex Reeves</div>
+          <div class="author-role">CEO, Verdant Labs</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card" style="--i:1">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">The 3D work KVS produced for our product launch was breathtaking. Our website became the industry benchmark overnight. Best investment we made.</p>
+      <div class="quote-author">
+        <div class="author-avatar" style="background:rgba(255,107,53,0.1);color:var(--accent2)">MP</div>
+        <div>
+          <div class="author-name">Mia Petrova</div>
+          <div class="author-role">CPO, Ember Labs</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card" style="--i:2">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">Working with KVS felt like having an in-house senior design team. They understood our constraints perfectly and delivered beyond every expectation.</p>
+      <div class="quote-author">
+        <div class="author-avatar" style="background:rgba(100,130,255,0.1);color:#8090ff">TN</div>
+        <div>
+          <div class="author-name">Tom Nakamura</div>
+          <div class="author-role">Head of Product, Nexus Pay</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="contact" class="cta-section">
+  <div class="cta-bg"></div>
+  <h2>Let's build<br>something <em>great</em></h2>
+  <p>Have a project in mind? We'd love to hear about it. Let's talk.</p>
+  <a href="mailto:hello@kvs.services" class="cta-email">hello@kvs.services ↗</a>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">KVS Studio</div>
+  <div class="footer-copy">© 2024 KVS Studio. All rights reserved.</div>
+  <div class="footer-links">
+    <a href="#">Twitter</a>
+    <a href="#">Dribbble</a>
+    <a href="#">LinkedIn</a>
+    <a href="#">Instagram</a>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cur.style.left = mx+'px'; cur.style.top = my+'px'; });
+(function ani(){ rx += (mx-rx)*0.12; ry += (my-ry)*0.12; ring.style.left = rx+'px'; ring.style.top = ry+'px'; requestAnimationFrame(ani); })();
+document.querySelectorAll('a,button,.service-card,.work-item').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.classList.add('hover'); ring.classList.add('hover'); });
+  el.addEventListener('mouseleave', () => { cur.classList.remove('hover'); ring.classList.remove('hover'); });
+});
+
+// Sticky nav
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', window.scrollY > 60); });
+
+// IntersectionObserver for fade-ins
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.stat-item,.service-card,.work-item,.process-step,.testimonial-card,.fade-up').forEach(el => io.observe(el));
+
+// Animated counters
+const counters = [
+  { el: document.getElementById('c1'), target: 120, suffix: '' },
+  { el: document.getElementById('c2'), target: 84, suffix: '' },
+  { el: document.getElementById('c3'), target: 12, suffix: '' },
+  { el: document.getElementById('c4'), target: 6, suffix: '' },
+];
+const statsIo = new IntersectionObserver((entries) => {
+  if(entries[0].isIntersecting) {
+    counters.forEach(c => {
+      let start = 0; const dur = 1800; const step = 16;
+      const inc = c.target / (dur / step);
+      const t = setInterval(() => {
+        start = Math.min(start + inc, c.target);
+        c.el.textContent = Math.floor(start);
+        if(start >= c.target) clearInterval(t);
+      }, step);
+    });
+    statsIo.disconnect();
+  }
+}, { threshold: 0.5 });
+statsIo.observe(document.querySelector('.stats-strip'));
+
+// Stagger service cards
+document.querySelectorAll('.service-card').forEach((c, i) => c.style.transitionDelay = (i * 0.08) + 's');
+document.querySelectorAll('.work-item').forEach((c, i) => c.style.transitionDelay = (i * 0.1) + 's');
+</script>
+</body>
+</html>
