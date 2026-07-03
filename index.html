@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Buku Kas — Asisten Keuangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EEF2E7;
+    --paper-2: #E6ECDD;
+    --rule: #B9CDB2;
+    --ink: #1C2A22;
+    --ink-soft: #4E5D51;
+    --red: #AE4438;
+    --red-soft: #F1DCD8;
+    --teal: #2E6B5E;
+    --teal-soft: #DCEAE5;
+    --gold: #A9821F;
+    --gold-soft: #EFE6C9;
+    --card-border: #C7D6BF;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app{
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    position: relative;
+  }
+
+  /* HEADER */
+  .header{
+    padding: 18px 16px 14px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .header-top{ display:flex; align-items:center; justify-content:space-between; }
+  .stamp{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2.5px;
+    color: var(--teal);
+    border: 1.5px solid var(--teal);
+    border-radius: 999px;
+    padding: 4px 12px;
+    transform: rotate(-2deg);
+    display: inline-block;
+  }
+  .icon-btn{
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: white;
+    font-size: 16px;
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-soft);
+  }
+  .icon-btn:active{ background: var(--paper-2); }
+  .total-row{ display:flex; align-items: baseline; justify-content: space-between; }
+  .total-label{ font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1px; }
+  .total-amount{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 30px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ACCOUNTS STRIP */
+  .accounts-strip{
+    display:flex;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .account-card{
+    background: white;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    min-width: 108px;
+    flex-shrink: 0;
+  }
+  .account-name{ font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px; }
+  .account-balance{ font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+  /* BUDGET SECTION */
+  .budget-section{
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-title-row{
+    display:flex; align-items:center; justify-content: space-between;
+    padding: 10px 16px 4px;
+    cursor: pointer;
+  }
+  .section-title{ font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .chevron{ font-size: 11px; color: var(--ink-soft); transition: transform .2s; }
+  .chevron.collapsed{ transform: rotate(-90deg); }
+  .budget-list{ padding: 4px 16px 12px; display:flex; flex-direction:column; gap:9px; }
+  .budget-list.collapsed{ display:none; }
+  .budget-row-top{ display:flex; justify-content:space-between; font-size: 12.5px; margin-bottom: 3px; }
+  .budget-cat{ font-weight: 500; }
+  .budget-figures{ font-family:'IBM Plex Mono', monospace; color: var(--ink-soft); }
+  .budget-figures.over{ color: var(--red); font-weight:600; }
+  .bar-track{ height: 6px; background: var(--paper-2); border-radius: 4px; overflow:hidden; }
+  .bar-fill{ height: 100%; background: var(--teal); border-radius: 4px; }
+  .bar-fill.over{ background: var(--red); }
+  .over-flag{ font-size: 11px; color: var(--red); margin-top: 2px; }
+
+  /* CHAT THREAD */
+  .chat-thread{
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px 8px;
+    background-image: repeating-linear-gradient(to bottom, transparent, transparent 30px, var(--rule) 31px);
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg-row{ display:flex; }
+  .msg-row.user{ justify-content: flex-end; }
+  .bubble{
+    max-width: 82%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .bubble.user{
+    background: var(--teal);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.assistant{
+    background: white;
+    border: 1px solid var(--card-border);
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.typing{ color: var(--ink-soft); font-style: italic; }
+
+  .ledger-entry{
+    background: white;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    position: relative;
+    padding-left: 16px;
+  }
+  .ledger-entry::before{
+    content:"";
+    position:absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--teal);
+  }
+  .ledger-entry.out::before{ background: var(--red); }
+  .ledger-top{ display:flex; justify-content: space-between; align-items:baseline; gap: 8px; }
+  .ledger-desc{ font-size: 13.5px; font-weight: 500; }
+  .ledger-amount{ font-family:'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .ledger-amount.in{ color: var(--teal); }
+  .ledger-amount.out{ color: var(--red); }
+  .ledger-meta{ font-size: 11px; color: var(--ink-soft); margin-top: 3px; font-family:'IBM Plex Mono', monospace; }
+  .ledger-warn{
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--red);
+    background: var(--red-soft);
+    padding: 5px 8px;
+    border-radius: 6px;
+  }
+
+  .empty-hint{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 13px;
+    padding: 30px 20px;
+    line-height: 1.6;
+  }
+
+  /* INPUT BAR */
+  .input-bar{
+    flex-shrink: 0;
+    display:flex;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+  }
+  .input-bar input{
+    flex:1;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    background: white;
+    color: var(--ink);
+    outline: none;
+  }
+  .input-bar input:focus{ border-color: var(--teal); }
+  .send-btn{
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: white;
+    border:none;
+    font-size: 17px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .send-btn:active{ background: #244f45; }
+  .send-btn:disabled{ background: var(--card-border); }
+
+  /* MODAL */
+  .modal-overlay{
+    position: absolute; inset:0;
+    background: rgba(28,42,34,0.45);
+    display:flex; align-items:flex-end;
+    z-index: 20;
+  }
+  .modal-overlay.hidden{ display:none; }
+  .modal-sheet{
+    background: var(--paper);
+    width: 100%;
+    max-height: 82%;
+    border-radius: 18px 18px 0 0;
+    padding: 16px 16px 20px;
+    overflow-y: auto;
+  }
+  .modal-header{ display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px; }
+  .modal-title{ font-family:'Fraunces', serif; font-weight:600; font-size: 19px; }
+  .tabs{ display:flex; gap: 6px; margin-bottom: 14px; }
+  .tab-btn{
+    flex:1; padding: 8px; border-radius: 8px; border: 1px solid var(--card-border);
+    background: white; font-size: 12.5px; cursor:pointer; color: var(--ink-soft); font-weight:600;
+  }
+  .tab-btn.active{ background: var(--teal); color:white; border-color: var(--teal); }
+  .edit-row{
+    display:flex; align-items:center; gap: 8px;
+    background: white; border:1px solid var(--card-border); border-radius: 10px;
+    padding: 8px 10px; margin-bottom: 8px;
+  }
+  .edit-row input[type=text]{
+    flex:1; border:none; outline:none; font-size: 13.5px; font-family:'Inter'; background:transparent; color: var(--ink);
+  }
+  .edit-row input[type=number]{
+    width: 108px; border:1px solid var(--card-border); border-radius:6px; padding: 6px 8px;
+    font-family:'IBM Plex Mono', monospace; font-size: 13px; text-align:right;
+  }
+  .edit-row .del-btn{
+    background:none; border:none; color: var(--red); font-size: 16px; cursor:pointer; padding: 2px 4px;
+  }
+  .add-row{ display:flex; gap: 6px; margin-top: 6px; margin-bottom: 16px; }
+  .add-row input[type=text]{
+    flex:1; border:1px solid var(--card-border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+  }
+  .add-row input[type=number]{
+    width: 108px; border:1px solid var(--card-border); border-radius: 8px; padding: 8px; font-size: 13px; text-align:right;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .add-row button{
+    background: var(--gold); color:white; border:none; border-radius: 8px; padding: 0 14px; font-size: 18px; cursor:pointer;
+  }
+  .save-btn{
+    width:100%; background: var(--teal); color:white; border:none; border-radius: 10px;
+    padding: 12px; font-size: 14px; font-weight:600; cursor:pointer; margin-top: 4px;
+  }
+  .reset-link{
+    display:block; text-align:center; margin-top: 14px; font-size: 12px; color: var(--red); text-decoration:underline; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="stamp">BUKU KAS</div>
+      <button class="icon-btn" id="settingsBtn">⚙</button>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Total Saldo</span>
+      <span class="total-amount" id="totalSaldo">Rp0</span>
+    </div>
+  </div>
+
+  <div class="accounts-strip" id="accountsStrip"></div>
+
+  <div class="budget-section">
+    <div class="section-title-row" id="budgetToggle">
+      <span class="section-title">Alokasi Budget · Bulan Ini</span>
+      <span class="chevron" id="budgetChevron">▾</span>
+    </div>
+    <div class="budget-list" id="budgetList"></div>
+  </div>
+
+  <div class="chat-thread" id="chatThread">
+    <div class="empty-hint" id="emptyHint">
+      Tulis transaksimu di sini, misalnya:<br>
+      <em>"beli bensin 20rb dari tunai"</em><br>
+      <em>"gajian masuk 3jt ke Dana"</em><br>
+      <em>"atur budget: kebutuhan pokok 500rb, kendaraan 200rb, tabungan 200rb, dana darurat 100rb"</em>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <input type="text" id="chatInput" placeholder="Tulis transaksi..." autocomplete="off">
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
+
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <span class="modal-title">Pengaturan</span>
+        <button class="icon-btn" id="closeModalBtn">✕</button>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabAccounts">Saldo Akun</button>
+        <button class="tab-btn" id="tabBudget">Alokasi Budget</button>
+      </div>
+      <div id="panelAccounts"></div>
+      <div id="panelBudget" style="display:none;"></div>
+      <div class="reset-link" id="resetLink">Hapus semua data & mulai ulang</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const DEFAULT_STATE = {
+    accounts: [
+      {id: uid(), name: 'Dana', balance: 0},
+      {id: uid(), name: 'ATM', balance: 0},
+      {id: uid(), name: 'Tunai', balance: 0}
+    ],
+    categories: [
+      {id: uid(), name: 'Kebutuhan Pokok', allocated: 0},
+      {id: uid(), name: 'Kendaraan', allocated: 0},
+      {id: uid(), name: 'Tabungan', allocated: 0},
+      {id: uid(), name: 'Dana Darurat', allocated: 0},
+      {id: uid(), name: 'Kiriman', allocated: 0},
+      {id: uid(), name: 'Lainnya', allocated: 0}
+    ],
+    transactions: [],
+    chat: []
+  };
+
+  let state = null;
+  let budgetCollapsed = false;
+
+  function uid(){
+    return 'x' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+  }
+
+  function formatRupiah(n){
+    n = Math.round(n || 0);
+    const neg = n < 0;
+    n = Math.abs(n);
+    let s = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return (neg ? '-' : '') + 'Rp' + s;
+  }
+
+  function formatTime(iso){
+    const d = new Date(iso);
+    const jam = d.getHours().toString().padStart(2,'0');
+    const menit = d.getMinutes().toString().padStart(2,'0');
+    const hari = d.toLocaleDateString('id-ID', {day:'numeric', month:'short'});
+    return hari + ' · ' + jam + ':' + menit;
+  }
+
+  async function loadState(){
+    try{
+      const res = await window.storage.get('kas-data', false);
+      if(res && res.value){
+        state = JSON.parse(res.value);
+        // backfill fields for safety
+        if(!state.chat) state.chat = [];
+        if(!state.categories) state.categories = DEFAULT_STATE.categories;
+        if(!state.accounts) state.accounts = DEFAULT_STATE.accounts;
+        if(!state.transactions) state.transactions = [];
+      } else {
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        await saveState();
+      }
+    }catch(e){
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      await saveState();
+    }
+  }
+
+  async function saveState(){
+    try{
+      await window.storage.set('kas-data', JSON.stringify(state), false);
+    }catch(e){
+      console.error('Gagal menyimpan data', e);
+    }
+  }
+
+  function findAccount(name){
+    if(!name) return null;
+    const n = name.trim().toLowerCase();
+    return state.accounts.find(a => a.name.trim().toLowerCase() === n) || null;
+  }
+  function findCategory(name){
+    if(!name) return null;
+    const n = name.trim().toLowerCase();
+    return state.categories.find(c => c.name.trim().toLowerCase() === n) || null;
+  }
+  function ensureAccount(name){
+    let acc = findAccount(name);
+    if(!acc){
+      acc = {id: uid(), name: name.trim(), balance: 0};
+      state.accounts.push(acc);
+    }
+    return acc;
+  }
+  function ensureCategory(name){
+    let cat = findCategory(name);
+    if(!cat){
+      cat = {id: uid(), name: name.trim(), allocated: 0};
+      state.categories.push(cat);
+    }
+    return cat;
+  }
+
+  function monthSpent(categoryName, uptoNow){
+    const now = new Date();
+    const m = now.getMonth(), y = now.getFullYear();
+    return state.transactions
+      .filter(t => t.type === 'out' && t.category.toLowerCase() === categoryName.toLowerCase())
+      .filter(t => { const d = new Date(t.ts); return d.getMonth()===m && d.getFullYear()===y; })
+      .reduce((sum,t)=> sum + t.amount, 0);
+  }
+
+  // ---------- RENDER ----------
+  function renderAll(){
+    renderTotal();
+    renderAccounts();
+    renderBudgets();
+    renderChat();
+  }
+
+  function renderTotal(){
+    const total = state.accounts.reduce((s,a)=>s+a.balance,0);
+    document.getElementById('totalSaldo').textContent = formatRupiah(total);
+  }
+
+  function renderAccounts(){
+    const el = document.getElementById('accountsStrip');
+    el.innerHTML = '';
+    state.accounts.forEach(a=>{
+      const card = document.createElement('div');
+      card.className = 'account-card';
+      card.innerHTML = `<div class="account-name">${escapeHtml(a.name)}</div><div class="account-balance">${formatRupiah(a.balance)}</div>`;
+      el.appendChild(card);
+    });
+  }
+
+  function renderBudgets(){
+    const el = document.getElementById('budgetList');
+    el.innerHTML = '';
+    state.categories.forEach(c=>{
+      const spent = monthSpent(c.name);
+      const allocated = c.allocated || 0;
+      const pct = allocated > 0 ? Math.min((spent/allocated)*100, 100) : 0;
+      const over = allocated > 0 && spent > allocated;
+      const row = document.createElement('div');
+      row.innerHTML = `
+        <div class="budget-row-top">
+          <span class="budget-cat">${escapeHtml(c.name)}</span>
+          <span class="budget-figures ${over?'over':''}">${formatRupiah(spent)} ${allocated>0 ? '/ '+formatRupiah(allocated) : ''}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill ${over?'over':''}" style="width:${allocated>0?pct:0}%"></div></div>
+        ${over ? `<div class="over-flag">⚠ Over ${formatRupiah(spent-allocated)} dari budget</div>` : ''}
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  function renderChat(){
+    const el = document.getElementById('chatThread');
+    const hint = document.getElementById('emptyHint');
+    el.innerHTML = '';
+    if(state.chat.length === 0){
+      el.appendChild(hint);
+      return;
+    }
+    state.chat.forEach(m=>{
+      const row = document.createElement('div');
+      if(m.role === 'user'){
+        row.className = 'msg-row user';
+        row.innerHTML = `<div class="bubble user">${escapeHtml(m.text)}</div>`;
+      } else if(m.role === 'assistant'){
+        row.className = 'msg-row';
+        row.innerHTML = `<div class="bubble assistant${m.typing?' typing':''}">${escapeHtml(m.text)}</div>`;
+      } else if(m.role === 'ledger'){
+        row.className = 'msg-row';
+        row.style.width = '100%';
+        row.innerHTML = `
+          <div class="ledger-entry ${m.type}" style="width:100%">
+            <div class="ledger-top">
+              <span class="ledger-desc">${escapeHtml(m.desc)}</span>
+              <span class="ledger-amount ${m.type}">${m.type==='in'?'+':'-'}${formatRupiah(m.amount)}</span>
+            </div>
+            <div class="ledger-meta">${escapeHtml(m.account)} · ${escapeHtml(m.category)} · ${formatTime(m.ts)}</div>
+            ${m.warning ? `<div class="ledger-warn">${escapeHtml(m.warning)}</div>` : ''}
+          </div>`;
+      }
+      el.appendChild(row);
+    });
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  // ---------- AI PARSING ----------
+  function buildSystemPrompt(){
+    const accNames = state.accounts.map(a=>a.name).join(', ');
+    const catNames = state.categories.map(c=>c.name + ' (budget: ' + formatRupiah(c.allocated) + ')').join(', ');
+    const now = new Date().toISOString();
+    return `Kamu adalah mesin parsing untuk aplikasi pencatatan keuangan pribadi berbahasa Indonesia (gaya chat informal, mirip WhatsApp). Balas HANYA dengan satu objek JSON valid, tanpa teks lain, tanpa markdown code fence, tanpa penjelasan.
+
+Waktu sekarang (ISO): ${now}
+Akun yang sudah ada: ${accNames}
+Kategori yang sudah ada: ${catNames}
+
+Skema output (pilih salah satu sesuai maksud pesan user):
+
+1) Transaksi pemasukan/pengeluaran:
+{"intent":"transaction","type":"in atau out","amount":angka_rupiah_bulat_tanpa_titik,"account":"nama akun (pakai yang sudah ada jika cocok, atau nama baru jika user sebut akun baru)","category":"nama kategori (pakai yang sudah ada jika cocok/mirip makna, atau buat nama baru yang wajar jika tidak ada yang cocok)","note":"ringkasan singkat dari pesan asli"}
+
+2) Mengatur/menetapkan alokasi budget bulanan (bisa lebih dari satu kategori sekaligus):
+{"intent":"set_budget","allocations":[{"category":"nama kategori","amount":angka_rupiah_bulat}]}
+
+3) Mengoreksi/menetapkan saldo suatu akun secara langsung (bukan transaksi masuk/keluar):
+{"intent":"set_balance","account":"nama akun","amount":angka_rupiah_bulat}
+
+4) Pertanyaan, sapaan, atau pesan yang tidak jelas maksud transaksinya:
+{"intent":"chat","reply":"jawaban singkat, ramah, dan membantu dalam Bahasa Indonesia"}
+
+Aturan penting:
+- Konversi singkatan Indonesia dengan benar: "rb"/"ribu" = x1.000, "jt"/"juta" = x1.000.000.
+- Jika pesan menyebut kata seperti "masuk", "gajian", "dapat", "terima", "kiriman dari" → type "in". Jika "beli", "bayar", "keluar", "buat", "untuk" → type "out".
+- Jangan pernah menambahkan teks di luar JSON. Jangan gunakan backtick.`;
+  }
+
+  async function callClaude(userText){
+    const systemPrompt = buildSystemPrompt();
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userText }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).map(b => b.text || '').join('\n');
+    const cleaned = textBlock.replace(/```json|```/g, '').trim();
+    return JSON.parse(cleaned);
+  }
+
+  async function handleParsed(parsed){
+    const nowIso = new Date().toISOString();
+
+    if(parsed.intent === 'transaction'){
+      const acc = ensureAccount(parsed.account || 'Tunai');
+      const cat = ensureCategory(parsed.category || 'Lainnya');
+      const amount = Math.abs(Math.round(parsed.amount || 0));
+      if(parsed.type === 'in'){
+        acc.balance += amount;
+      } else {
+        acc.balance -= amount;
+      }
+      state.transactions.push({
+        id: uid(), ts: nowIso, type: parsed.type, amount, account: acc.name, category: cat.name, note: parsed.note || ''
+      });
+
+      let warning = null;
+      if(parsed.type === 'out' && cat.allocated > 0){
+        const spent = monthSpent(cat.name);
+        if(spent > cat.allocated){
+          warning = `Over ${formatRupiah(spent - cat.allocated)} dari budget ${cat.name} bulan ini (${formatRupiah(spent)} / ${formatRupiah(cat.allocated)})`;
+        }
+      }
+      state.chat.push({
+        role: 'ledger', ts: nowIso, type: parsed.type, amount,
+        account: acc.name, category: cat.name, desc: parsed.note || cat.name, warning
+      });
+    }
+    else if(parsed.intent === 'set_budget'){
+      const lines = [];
+      (parsed.allocations || []).forEach(a=>{
+        const cat = ensureCategory(a.category || 'Lainnya');
+        cat.allocated = Math.abs(Math.round(a.amount || 0));
+        lines.push(`${cat.name}: ${formatRupiah(cat.allocated)}`);
+      });
+      state.chat.push({ role:'assistant', ts: nowIso, text: 'Budget diperbarui:\n' + lines.join('\n') });
+    }
+    else if(parsed.intent === 'set_balance'){
+      const acc = ensureAccount(parsed.account || 'Tunai');
+      acc.balance = Math.round(parsed.amount || 0);
+      state.chat.push({ role:'assistant', ts: nowIso, text: `Saldo ${acc.name} diatur ke ${formatRupiah(acc.balance)}` });
+    }
+    else if(parsed.intent === 'chat'){
+      state.chat.push({ role:'assistant', ts: nowIso, text: parsed.reply || 'Baik.' });
+    }
+    else {
+      state.chat.push({ role:'assistant', ts: nowIso, text: 'Maaf, aku belum paham maksudnya. Coba tulis ulang, misal: "beli makan 20rb dari tunai".' });
+    }
+  }
+
+  async function handleSend(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    input.value = '';
+
+    state.chat.push({ role:'user', ts: new Date().toISOString(), text });
+    state.chat.push({ role:'assistant', ts: new Date().toISOString(), text: 'Mencatat...', typing:true });
+    renderChat();
+
+    try{
+      const parsed = await callClaude(text);
+      state.chat.pop(); // remove typing indicator
+      await handleParsed(parsed);
+    }catch(e){
+      console.error(e);
+      state.chat.pop();
+      state.chat.push({ role:'assistant', ts: new Date().toISOString(), text: 'Maaf, ada gangguan saat memproses. Coba lagi ya.' });
+    }
+
+    renderAll();
+    await saveState();
+    sendBtn.disabled = false;
+    input.focus();
+  }
+
+  // ---------- SETTINGS MODAL ----------
+  function renderAccountsPanel(){
+    const panel = document.getElementById('panelAccounts');
+    panel.innerHTML = '';
+    state.accounts.forEach(a=>{
+      const row = document.createElement('div');
+      row.className = 'edit-row';
+      row.innerHTML = `
+        <input type="text" value="${escapeHtml(a.name)}" data-id="${a.id}" data-field="name">
+        <input type="number" value="${a.balance}" data-id="${a.id}" data-field="balance">
+        <button class="del-btn" data-del="${a.id}">✕</button>`;
+      panel.appendChild(row);
+    });
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `
+      <input type="text" id="newAccName" placeholder="Nama akun baru">
+      <input type="number" id="newAccBalance" placeholder="Saldo">
+      <button id="addAccBtn">+</button>`;
+    panel.appendChild(addRow);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.textContent = 'Simpan Perubahan';
+    saveBtn.onclick = async ()=>{
+      panel.querySelectorAll('input[data-field="name"]').forEach(inp=>{
+        const acc = state.accounts.find(x=>x.id===inp.dataset.id);
+        if(acc) acc.name = inp.value.trim() || acc.name;
+      });
+      panel.querySelectorAll('input[data-field="balance"]').forEach(inp=>{
+        const acc = state.accounts.find(x=>x.id===inp.dataset.id);
+        if(acc) acc.balance = Math.round(parseFloat(inp.value) || 0);
+      });
+      renderAll();
+      await saveState();
+      closeModal();
+    };
+    panel.appendChild(saveBtn);
+
+    panel.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.onclick = ()=>{
+        state.accounts = state.accounts.filter(a=>a.id !== btn.dataset.del);
+        renderAccountsPanel();
+      };
+    });
+    document.getElementById('addAccBtn').onclick = ()=>{
+      const name = document.getElementById('newAccName').value.trim();
+      const bal = Math.round(parseFloat(document.getElementById('newAccBalance').value) || 0);
+      if(name){
+        state.accounts.push({id: uid(), name, balance: bal});
+        renderAccountsPanel();
+      }
+    };
+  }
+
+  function renderBudgetPanel(){
+    const panel = document.getElementById('panelBudget');
+    panel.innerHTML = '';
+    state.categories.forEach(c=>{
+      const row = document.createElement('div');
+      row.className = 'edit-row';
+      row.innerHTML = `
+        <input type="text" value="${escapeHtml(c.name)}" data-id="${c.id}" data-field="name">
+        <input type="number" value="${c.allocated}" data-id="${c.id}" data-field="allocated">
+        <button class="del-btn" data-del="${c.id}">✕</button>`;
+      panel.appendChild(row);
+    });
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `
+      <input type="text" id="newCatName" placeholder="Kategori baru">
+      <input type="number" id="newCatAmount" placeholder="Budget">
+      <button id="addCatBtn">+</button>`;
+    panel.appendChild(addRow);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.textContent = 'Simpan Perubahan';
+    saveBtn.onclick = async ()=>{
+      panel.querySelectorAll('input[data-field="name"]').forEach(inp=>{
+        const cat = state.categories.find(x=>x.id===inp.dataset.id);
+        if(cat) cat.name = inp.value.trim() || cat.name;
+      });
+      panel.querySelectorAll('input[data-field="allocated"]').forEach(inp=>{
+        const cat = state.categories.find(x=>x.id===inp.dataset.id);
+        if(cat) cat.allocated = Math.round(parseFloat(inp.value) || 0);
+      });
+      renderAll();
+      await saveState();
+      closeModal();
+    };
+    panel.appendChild(saveBtn);
+
+    panel.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.onclick = ()=>{
+        state.categories = state.categories.filter(c=>c.id !== btn.dataset.del);
+        renderBudgetPanel();
+      };
+    });
+    document.getElementById('addCatBtn').onclick = ()=>{
+      const name = document.getElementById('newCatName').value.trim();
+      const amt = Math.round(parseFloat(document.getElementById('newCatAmount').value) || 0);
+      if(name){
+        state.categories.push({id: uid(), name, allocated: amt});
+        renderBudgetPanel();
+      }
+    };
+  }
+
+  function openModal(){
+    renderAccountsPanel();
+    renderBudgetPanel();
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.add('hidden');
+  }
+
+  // ---------- INIT ----------
+  document.getElementById('sendBtn').addEventListener('click', handleSend);
+  document.getElementById('chatInput').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') handleSend();
+  });
+  document.getElementById('settingsBtn').addEventListener('click', openModal);
+  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+  document.getElementById('modalOverlay').addEventListener('click', (e)=>{
+    if(e.target.id === 'modalOverlay') closeModal();
+  });
+  document.getElementById('budgetToggle').addEventListener('click', ()=>{
+    budgetCollapsed = !budgetCollapsed;
+    document.getElementById('budgetList').classList.toggle('collapsed', budgetCollapsed);
+    document.getElementById('budgetChevron').classList.toggle('collapsed', budgetCollapsed);
+  });
+  document.getElementById('tabAccounts').addEventListener('click', ()=>{
+    document.getElementById('tabAccounts').classList.add('active');
+    document.getElementById('tabBudget').classList.remove('active');
+    document.getElementById('panelAccounts').style.display = 'block';
+    document.getElementById('panelBudget').style.display = 'none';
+  });
+  document.getElementById('tabBudget').addEventListener('click', ()=>{
+    document.getElementById('tabBudget').classList.add('active');
+    document.getElementById('tabAccounts').classList.remove('active');
+    document.getElementById('panelBudget').style.display = 'block';
+    document.getElementById('panelAccounts').style.display = 'none';
+  });
+  document.getElementById('resetLink').addEventListener('click', async ()=>{
+    if(confirm('Yakin hapus semua data dan mulai ulang?')){
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      await saveState();
+      renderAll();
+      closeModal();
+    }
+  });
+
+  (async function init(){
+    await loadState();
+    renderAll();
+  })();
+})();
+</script>
+</body>
+</html>
